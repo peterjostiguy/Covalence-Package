@@ -25,15 +25,12 @@ import {
 // var enemiesCursor;
 var changedData = firebase.database().ref('projects');
 changedData.on('value', function(pulledData) {
+    applyChange = false;
     atom.workspace.observeTextEditors(function(editor) {
         editor.setTextInBufferRange([
             [pulledData.val().rowToEdit, 0],
             [pulledData.val().rowToEdit, 0]
         ], pulledData.val().lineData);
-        console.log(currentRow);
-        console.log(newRow);
-        applyChange = false;
-        // currentRow = editor.setCursorBufferPosition([newRow, 0]);
         // editor.setText(pulledData.val().lineData)
     });
 });
@@ -84,16 +81,11 @@ export default {
             editor.onDidChange(function() {
                 if (applyChange) {
                     newRow = editor.getCursorBufferPosition().row;
-                    console.log(currentRow);
-                    console.log(newRow);
-                    if (newRow !== currentRow && applyChange === true) {
+                    if (newRow !== currentRow) {
                         lineData = editor.lineTextForBufferRow(currentRow);
-                        console.log(lineData);
                         if (lineData) {
                             sendData(lineData, currentRow);
-                            console.log(lineData);
                         }
-                        // currentRow = editor.getCursorBufferPosition().row;
                     }
                 } else {
                     applyChange = true;
@@ -102,14 +94,15 @@ export default {
         });
 
         function sendData(lineData, rowToEdit) {
-            applyChange = false;
-            firebase.database.INTERNAL.forceWebSockets();
-            console.log(lineData);
-            console.log(rowToEdit);
-            firebase.database().ref("projects").set({
-                "lineData": lineData,
-                "rowToEdit": rowToEdit
-            });
+          applyChange = false;
+          firebase.database.INTERNAL.forceWebSockets();
+          firebase.database().ref("projects").set({
+              "lineData": lineData,
+              "rowToEdit": rowToEdit
+          });
+          atom.workspace.observeTextEditors(function(editor) {
+            currentRow = newRow;
+          })
         }
     }
 
