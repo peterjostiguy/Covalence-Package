@@ -77,26 +77,32 @@ export default {
         var lineData;
         // var currentRow = 0;
         // var newRow = 0;
+
         atom.workspace.observeTextEditors(function(editor) {
             currentRow = editor.getCursorBufferPosition().row;
             newRow = editor.getCursorBufferPosition().row;
             editor.onDidChange(function() {
-                newRow = editor.getCursorBufferPosition().row;
-                console.log(currentRow);
-                console.log(newRow);
-                if (newRow !== currentRow && applyChange === true) {
-                    lineData = editor.lineTextForBufferRow(currentRow);
-                    console.log(lineData);
-                    if (lineData) {
-                        sendData(lineData, currentRow);
+                if (applyChange) {
+                    newRow = editor.getCursorBufferPosition().row;
+                    console.log(currentRow);
+                    console.log(newRow);
+                    if (newRow !== currentRow && applyChange === true) {
+                        lineData = editor.lineTextForBufferRow(currentRow);
                         console.log(lineData);
+                        if (lineData) {
+                            sendData(lineData, currentRow);
+                            console.log(lineData);
+                        }
                         // currentRow = editor.getCursorBufferPosition().row;
                     }
+                } else {
+                    applyChange = true;
                 }
             });
         });
 
         function sendData(lineData, rowToEdit) {
+            applyChange = false;
             firebase.database.INTERNAL.forceWebSockets();
             console.log(lineData);
             console.log(rowToEdit);
