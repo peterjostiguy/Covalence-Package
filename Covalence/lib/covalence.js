@@ -32,6 +32,7 @@ changedData.on('value', function(pulledData) {
         editor.setText(pulledData.val().pageData)
         newPage = false;
       }
+      // editor.addCursorAtBufferPosition([pulledData.val().rowToEdit, pulledData.val().lineData.length]);
       console.log(pulledData.val().rowToEdit);
         editor.setTextInBufferRange([
             [pulledData.val().rowToEdit, 0],
@@ -77,25 +78,48 @@ export default {
     toggle() {
         var pageData;
         var lineData;
+        var lineToEdit = 0;
+        firebase.database.INTERNAL.forceWebSockets();
+
 
         atom.workspace.observeTextEditors(function(editor) {
             currentRow = editor.getCursorBufferPosition().row;
             newRow = editor.getCursorBufferPosition().row;
             editor.onDidChangeCursorPosition(function() {
+              if (newRow !== (currentRow + 1)) {
+                currentRow = editor.getCursorBufferPosition().row;
+                newRow = editor.getCursorBufferPosition().row;
+              }
+              // currentRow = editor.getCursorBufferPosition().row;
+              newRow = editor.getCursorBufferPosition().row;
+              // console.log("Did Change");
                 if (applyChange) {
                     newRow = editor.getCursorBufferPosition().row;
                     if (newRow !== currentRow) {
+                      lineToEdit = currentRow
                       console.log("Line Change. Current Row: " + currentRow + "New Row: " + newRow);
                         lineData = editor.lineTextForBufferRow(currentRow);
                         pageData = editor.getText();
+                        currentRow = editor.getCursorBufferPosition().row;
+
+                        // console.log(lineData);
                         if (lineData) {
-                          sendData(lineData, currentRow, pageData);
-                          console.log("data sent:" + lineData);
+                          sendData(lineData, lineToEdit, pageData);
+
+                          // console.log("data sent:" + lineData);
+                        }
+                        else {
+                          // console.log("write code here");
                         }
                     }
                 } else {
                     applyChange = true;
                 }
+
+              // console.log(currentRow);
+              // console.log(newRow);
+              // console.log(lineData);
+
             });
         });
 
@@ -107,9 +131,6 @@ export default {
               "rowToEdit": rowToEdit,
               "pageData": pageData
           });
-          atom.workspace.observeTextEditors(function(editor) {
-            currentRow = newRow;
-          })
         }
     }
 
